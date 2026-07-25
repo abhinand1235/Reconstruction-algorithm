@@ -1,0 +1,256 @@
+I think **10–14 days** is a realistic target if you're also trying to understand the mathematics. If you rush it into one week, you'll likely end up with code you can't confidently explain.
+
+Here's the dependency-based roadmap I'd follow.
+
+---
+
+# Phase 1 — Build the Foundation (Days 1–2)
+
+These modules define the physical system.
+
+```text
+core/
+├── probe.py
+├── medium.py
+├── pixel_grid.py
+└── transmit.py
+```
+
+### Deliverables
+
+* [ ] Linear probe geometry
+* [ ] Element positions
+* [ ] Medium properties
+* [ ] Pixel grid generation
+* [ ] Simple transmit definition
+* [ ] `examples/01_probe.py`
+
+**Checkpoint:** You can visualize the probe and imaging grid.
+
+---
+
+# Phase 2 — Create a Virtual Ultrasound Scene (Days 2–3)
+
+```text
+simulation/
+├── phantom.py
+├── waveform.py
+└── rf_simulator.py
+```
+
+### Deliverables
+
+* [ ] Point scatterer phantom
+* [ ] Gaussian/sine pulse generation
+* [ ] Simulated RF echoes
+* [ ] `examples/02_phantom.py`
+* [ ] `examples/03_rf_simulation.py`
+
+**Checkpoint:** You can plot RF data from every probe element.
+
+---
+
+# Phase 3 — Beamforming Mathematics (Days 4–6)
+
+This is the core of the project.
+
+```text
+beamforming/
+├── delays.py
+├── interpolation.py
+├── das.py
+└── beamformer.py
+```
+
+### Deliverables
+
+* [ ] Transmit delay calculation
+* [ ] Receive delay calculation
+* [ ] Linear interpolation
+* [ ] Delay-and-Sum implementation
+* [ ] High-level beamformer API
+* [ ] `examples/04_delays.py`
+* [ ] `examples/05_beamforming.py`
+
+**Checkpoint:** You reconstruct your first image (even if it's noisy).
+
+---
+
+# Phase 4 — Image Formation (Days 7–8)
+
+```text
+processing/
+├── envelope.py
+├── log_compression.py
+└── scan.py
+```
+
+### Deliverables
+
+* [ ] Envelope detection
+* [ ] Log compression
+* [ ] Scan conversion (or simple display if scan conversion isn't needed)
+* [ ] `examples/06_bmode.py`
+
+**Checkpoint:** You produce a recognizable B-mode ultrasound image.
+
+---
+
+# Phase 5 — Visualization (Day 9)
+
+```text
+visualization/
+└── plotting.py
+```
+
+### Deliverables
+
+* [ ] RF plots
+* [ ] Delay maps
+* [ ] Phantom visualization
+* [ ] Final B-mode display
+
+---
+
+# Phase 6 — Utilities (Day 9)
+
+```text
+utils/
+└── constants.py
+```
+
+### Deliverables
+
+* [ ] Speed of sound constant
+* [ ] Default frequencies
+* [ ] Default probe settings
+
+---
+
+# Phase 7 — Validation (Days 10–11)
+
+```text
+tests/
+```
+
+### Deliverables
+
+* [ ] Test probe geometry
+* [ ] Test RF simulation
+* [ ] Test delay calculations
+* [ ] Test DAS beamforming
+
+---
+
+# Phase 8 — Research Notes (Day 11)
+
+```text
+notes/
+├── mathematics.md
+└── experiments.md
+```
+
+### mathematics.md
+
+Document:
+
+* Beamforming equations
+* Delay equations
+* Wave propagation assumptions
+* Interpolation method
+* Envelope detection
+* Log compression
+
+### experiments.md
+
+Record:
+
+* Different probe parameters
+* Different phantom layouts
+* Image quality observations
+* Performance notes
+
+---
+
+# Final Architecture
+
+```text
+1. core/
+      ↓
+2. simulation/
+      ↓
+3. beamforming/
+      ↓
+4. processing/
+      ↓
+5. visualization/
+      ↓
+6. tests/
+```
+
+Every module depends only on the modules above it.
+
+---
+
+# Milestones
+
+### Milestone 1
+
+* Probe
+* Medium
+* Pixel grid
+
+You can define an imaging setup.
+
+---
+
+### Milestone 2
+
+* Phantom
+* RF simulator
+
+You can generate synthetic ultrasound data.
+
+---
+
+### Milestone 3 ⭐
+
+* Delays
+* DAS
+
+You can reconstruct an image.
+
+This is the most important milestone. If your presentation happens before you're completely finished, reaching this point still gives you a compelling demonstration.
+
+---
+
+### Milestone 4
+
+* Processing
+
+Your reconstruction now resembles a clinical B-mode image.
+
+---
+
+### Milestone 5
+
+* Tests
+* Visualization
+* Cleanup
+
+The project is polished and easier to present.
+
+---
+
+## One recommendation
+
+Don't measure progress by **files completed**. Measure it by **capabilities**:
+
+* ✅ I can define a probe.
+* ✅ I can generate a phantom.
+* ✅ I can simulate RF data.
+* ✅ I can compute delays.
+* ✅ I can reconstruct an image.
+* ✅ I can produce a B-mode image.
+
+If you can demonstrate those six capabilities and explain the mathematics behind each one, you'll have achieved the real objective: understanding the complete beamforming pipeline well enough to relate every stage back to JAXUS.
