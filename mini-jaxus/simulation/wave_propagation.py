@@ -2,23 +2,32 @@ import sys
 sys.path.append("..")
 sys.path.append("../core")
 from core.transmit import *
-import jax
-cell_width = 0.00003 # width is 30 micrometer which is 30*10^-6m 
+from core.probe import *
+import math
+import jax 
 import jax.numpy as jnp
-cell_pos=[]
+cell_width = 0.00003 # width is 30 micrometer which is 30*10^-6m
+cell=[]
 for i in range(len(tissue_matrix)):
   for j in range(len(tissue_matrix)):
-   cell_pos.append((i+0.00003,j+0.00003))
+   cell.append((i+cell_width,j+cell_width))
+cell_pos = jnp.array(cell)
+print("The cell poistion is")
+print(cell_pos)
+#x->latral distance y->depth
+x = cell_pos[:, 0]
+y = cell_pos[:, 1]
 #to determine how close the wave is to the cells use cell_pos - wave_pos
-dist_btw=[]
-for j in range(len(cell_pos)):
-  x,y = cell_pos[j]
-  dist_btw.append(x-wave_pos)
-print("The distance between cell and wavefront")
-print(dist_btw)
-cells_near=[]
-for i in range(len(dist_btw)):
- for d in dist_btw[i]:
-  if d<=0:
-   cell_near.append(cell_pos[i])
-print(cell near)
+distance_between = y[:, None] - wave_pos[None, :]
+val = jnp.any(distance_between <= 0, axis=1)
+cell_near = cell_pos[val]
+print("The cells near")
+print(cell_near)
+ #cells that interacted with wave
+#find the distance form tissue to tranducers
+x = cell_near[:,0]
+y = cell_near[:,1]
+time_delay = jnp.sqrt((x[:,None]-0)**2 + (y[:,None]-elem_pos[None,:])**2)/1540
+print("The time delay is: ")
+print(time_delay)
+ 
