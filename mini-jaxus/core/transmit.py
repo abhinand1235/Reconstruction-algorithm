@@ -15,13 +15,15 @@ phi = 0 # wave strating at maximum aplitude: intial phase
 time_onecycle = 1/center_freq
 t = jnp.arange(0,5*time_onecycle,time_onecycle/20)  # here one clock cycle time is time_onecycle
 k = (2 * 3.14)/wavelength # (2 * pi)/lambda
-r = jnp.arange(0,0.04,1e-5) #wave travels 4 cm stsring from 0 
+r = jnp.arange(0,0.02,1e-5) #wave travels 2 cm stsring from 0 
 R,T = jnp.meshgrid(r,t)
 plane_wave = A * jnp.cos((k*R)-(angular_freq*T)+phi)
 
 #Create a square region of ovarian tissue(epithilum) assume the dimension to be 40 * 40
-tissue_matrix = jnp.ones((40,40))
-M,N = (40-1)/2,(40-1)/2
+row = 40
+column = 40
+tissue_matrix = jnp.ones((row,column))
+M,N = (row-1)/2,(column-1)/2
 radius = 8
 
 #the cyst shape equation (x-M)^2 + (y-N)^2 <=R^2
@@ -31,7 +33,7 @@ for i in range(len(tissue_matrix)):
         if(dis<=radius**2):
             tissue_matrix=tissue_matrix.at[i,j].set(0)
 
-end_t = 0.04/speed #time at which the waves reaches the 4cm long tissue
+end_t = 0.02/speed #time at which the waves reaches the 2cm long tissue
 wave_t = jnp.arange(0,end_t,time_onecycle/20)
 wave_pos = speed * wave_t
 
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     plt.close()
 
     print("The tissue matrix without cyst: ")
-    print(jnp.ones((40,40)))
+    print(jnp.ones((row,column)))
     print(M,N)
     print("Updated")
     print(tissue_matrix)

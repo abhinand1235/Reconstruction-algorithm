@@ -9,7 +9,7 @@ cell_width = 0.00003 # width is 30 micrometer which is 30*10^-6m
 cell=[]
 for i in range(len(tissue_matrix)):
   for j in range(len(tissue_matrix)):
-   cell.append((i+cell_width,j+cell_width))
+   cell.append((i*cell_width,j*cell_width))
 cell_pos = jnp.array(cell)
 #x->latral distance y->depth
 x = cell_pos[:, 0]
@@ -20,7 +20,8 @@ cell_near = cell_pos[val] #cells that interacted with wave
 #find the distance form tissue to tranducers
 x = cell_near[:,0]
 y = cell_near[:,1]
-time_delay = jnp.sqrt((x[:,None]-0)**2 + (y[:,None]-elem_pos[None,:])**2)/1540
+dist = jnp.sqrt((x[:,None]-0)**2 + (y[:,None]-elem_pos[None,:])**2)
+time_delay = dist/1540
 if __name__ == "__main__":
   print("The cell poistion is")
   print(cell_pos)

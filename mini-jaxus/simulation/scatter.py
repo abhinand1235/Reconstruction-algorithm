@@ -1,7 +1,34 @@
 from wave_propagation import *
 import jax.numpy as jnp
-#The echo equation is Echo= Reflection Weight× Attenuation
+import sys
+sys.path.append("..")
+sys.path.append("../core")
+from core.transmit import *
+#The echo equation is Echo = Reflection Weight× Attenuation
 #reflection weight: How much of the wave does this material send back
-#Attenuation: How much does the echo lose strength while traveling?
-reflectw_tissue = 1.0
-relectw_cyst = 0.05
+#Attenuation:How much does the echo lose strength while traveling eq: Attenuation=e^−αd
+attentation_coefficient = 0.5 # means for 1 Mhz wave tarvelling 1 cm distance 0.5 decibal of sound energy is lost 
+#convert the coefficient in Np/m
+# 0.5 dB/cm/MHz × 5 MHz =  2.5 dB/cm as the wave frequency is 5Mhz
+# 2.5 db/cm * 100 cm/m = 250 db/m
+#1 Np = 8.686 dB, so 250/8.68 = 28.8 Np/m
+coe = 28.8
+cell_index = cell_index = jnp.round(cell_near / cell_width).astype(jnp.int32)
+attenuation = jnp.exp(-coe*dist)
+for i in range(len(cell_index)):
+ for j in range(len(cell_index)):
+  
+ 
+"""if __name__ == "__main__":
+  print("attenuation is: ")
+  print(attenuation)
+  print(jnp.min(dist))
+  print(jnp.max(dist))
+  print("The echo for normal tissue: ")
+  print(echo_tissue)
+  print("The echo for cyst")
+  print
+"""
+print(cell_index)
+print(x)
+print(y)
