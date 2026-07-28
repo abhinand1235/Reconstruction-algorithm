@@ -54,7 +54,6 @@ if __name__ == "__main__":
     plt.show(block=False)
     plt.pause(2)
     plt.close()
-
     print("The tissue matrix without cyst: ")
     print(jnp.ones((row,column)))
     print(M,N)
