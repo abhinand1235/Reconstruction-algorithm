@@ -16,9 +16,7 @@ tissue_weight = 1.0
 cyst_weight = 0.5
 coe = 28.8
 cell_index = cell_index = jnp.round(cell_near / cell_width).astype(jnp.int32)
-print(cell_index)
 attenuation = jnp.exp(-coe*dist)
-print(attenuation)
 echo = []
 for i,j in cell_index:
  if tissue_matrix[i][j] == 1:
@@ -32,4 +30,4 @@ if __name__ == "__main__":
   print(jnp.min(dist))
   print(jnp.max(dist))
   print("The echo generated is: ")
-  print(echo)
+  print(echo) #echo amplitude: how strong the waves that reached the transducer

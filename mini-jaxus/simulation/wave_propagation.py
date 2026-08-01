@@ -20,7 +20,7 @@ cell_near = cell_pos[val] #cells that interacted with wave
 #find the distance form tissue to tranducers
 x = cell_near[:,0]
 y = cell_near[:,1]
-dist = jnp.sqrt((x[:,None]-0)**2 + (y[:,None]-elem_pos[None,:])**2)
+dist = jnp.sqrt((x[:,None]-elem_pos[None,:])**2 + (y[:,None]-0)**2)
 time_delay = dist/1540
 if __name__ == "__main__":
   print("The cell poistion is")
