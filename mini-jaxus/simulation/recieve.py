@@ -7,7 +7,10 @@ from wave_propagation import *
 import jax.numpy as jnp
 echo_amplitude = echo
 echo_tof = 2*time_delay
-print(echo_amplitude.shape)
-print(echo_tof.shape)
 rf_data = jnp.stack([echo_tof,echo_amplitude],axis=-1)
-print(rf_data)
+if __name__ =="__main__":
+ print(echo_amplitude.shape)
+ print(echo_tof.shape)
+ print(rf_data)
+ print(rf_data.shape) #1600 blocks with each block 128 rows and 2 columns
+ 
