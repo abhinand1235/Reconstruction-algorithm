@@ -34,7 +34,8 @@ for i in range(len(tissue_matrix)):
             tissue_matrix=tissue_matrix.at[i,j].set(0)
 
 end_t = 0.02/speed #time at which the waves reaches the 2cm long tissue
-wave_t = jnp.arange(0,end_t,time_onecycle/20)
+t_sample = time_onecycle/20
+wave_t = jnp.arange(0,end_t,t_sample)
 wave_pos = speed * wave_t
 
 # --- ONLY EXECUTES WHEN RUNNING transmit.py DIRECTLY ---

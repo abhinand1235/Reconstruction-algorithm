@@ -1,0 +1,242 @@
+
+========== ./core/probe.py ==========
+#probe.py
+import jax
+import jax.numpy as jnp
+array_elem = 128
+elem_id = jnp.arange(1,array_elem+1) #tranducer element id
+pitch = 0.0003
+mid_point = (1 + array_elem)/2
+elem_pos = (elem_id - mid_point)*pitch
+width = 0.00027  # width of transducer < pitch 
+center_freq = 4e6 #the frequncy at which tranducer emits sound and recieve it effeciently
+aperature = (array_elem - 1)*pitch
+if __name__ == "__main__":
+ print(elem_id)
+ print(elem_pos)
+ print("The aperature is: ",aperature) #total width
+
+========== ./core/medium.py ==========
+from probe import *
+speed = 1540 # soft tissue
+density = 1000
+acoustic_imp = speed * density # how much a medium resist the propogarion of sound waves
+wavelength = speed / center_freq
+if __name__ == "__main__":
+ print(wavelength)
+ 
+
+========== ./core/pixel_grid.py ==========
+
+========== ./core/transmit.py ==========
+from probe import *
+from medium import *
+import jax.numpy as jnp
+jnp.set_printoptions(threshold=float('inf'))
+jnp.set_printoptions(
+    threshold=float('inf'),
+    linewidth=200
+)
+import jax
+import matplotlib.pyplot as plt
+#u(r,t)=Acos(kr−ωt+ϕ): plane wave equation in 2d
+A = 1000000 #1 MPa
+angular_freq = center_freq * 2 * 3.14 # 2*pi*f
+phi = 0 # wave strating at maximum aplitude: intial phase 
+time_onecycle = 1/center_freq
+t = jnp.arange(0,5*time_onecycle,time_onecycle/20)  # here one clock cycle time is time_onecycle
+k = (2 * 3.14)/wavelength # (2 * pi)/lambda
+r = jnp.arange(0,0.02,1e-5) #wave travels 2 cm stsring from 0 
+R,T = jnp.meshgrid(r,t)
+plane_wave = A * jnp.cos((k*R)-(angular_freq*T)+phi)
+
+#Create a square region of ovarian tissue(epithilum) assume the dimension to be 40 * 40
+row = 40
+column = 40
+tissue_matrix = jnp.ones((row,column))
+M,N = (row-1)/2,(column-1)/2
+radius = 8
+
+#the cyst shape equation (x-M)^2 + (y-N)^2 <=R^2
+for i in range(len(tissue_matrix)):
+    for j in range(len(tissue_matrix)):
+        dis = (i-M)**2 + (j-N)**2
+        if(dis<=radius**2):
+            tissue_matrix=tissue_matrix.at[i,j].set(0)
+
+end_t = 0.02/speed #time at which the waves reaches the 2cm long tissue
+wave_t = jnp.arange(0,end_t,time_onecycle/20)
+wave_pos = speed * wave_t
+
+# --- ONLY EXECUTES WHEN RUNNING transmit.py DIRECTLY ---
+if __name__ == "__main__":
+    plt.figure(figsize=(12,4))
+    plt.plot(
+        r,
+        plane_wave[len(t)//2],
+        linewidth=3,
+        antialiased=True,
+        solid_capstyle="round",
+        solid_joinstyle="round"
+    )
+    plt.xlim(0, 0.004)       # Zoom only
+    plt.ylim(-A, A)
+    plt.grid(True)
+    plt.show(block=False)
+    plt.pause(2)
+    plt.close()
+    print("The tissue matrix without cyst: ")
+    print(jnp.ones((row,column)))
+    print(M,N)
+    print("Updated")
+    print(tissue_matrix)
+    print("The time from transducers to tissue cyst with each clock cycle 20 samples")
+    print(wave_t)
+    print("The wave pos from transducers to tissue cyst with each clock cycle 20 samples")
+    print(wave_pos)
+
+========== ./simulation/wave_propagation.py ==========
+import sys
+sys.path.append("..")
+sys.path.append("../core")
+from core.transmit import *
+from core.probe import *
+import jax 
+import jax.numpy as jnp
+cell_width = 0.00003 # width is 30 micrometer which is 30*10^-6m
+cell=[]
+for i in range(len(tissue_matrix)):
+  for j in range(len(tissue_matrix)):
+   cell.append((i*cell_width,j*cell_width))
+cell_pos = jnp.array(cell)
+#x->latral distance y->depth
+x = cell_pos[:, 0]
+y = cell_pos[:, 1]
+distance_between = y[:, None] - wave_pos[None, :] #to determine how close the wave is to the cells use cell_pos - wave_pos
+val = jnp.any(distance_between <= 0, axis=1)
+cell_near = cell_pos[val] #cells that interacted with wave
+#find the distance form tissue to tranducers
+x = cell_near[:,0]
+y = cell_near[:,1]
+dist = jnp.sqrt((x[:,None]-elem_pos[None,:])**2 + (y[:,None]-0)**2)
+time_delay = dist/1540
+if __name__ == "__main__":
+  print("The cell poistion is")
+  print(cell_pos)
+  print("The cells near")
+  print(cell_near)
+  print("The time delay is: ")
+  print(time_delay)
+
+========== ./simulation/scatter.py ==========
+from wave_propagation import *
+import jax.numpy as jnp
+import sys
+sys.path.append("..")
+sys.path.append("../core")
+from core.transmit import *
+#The echo equation is Echo = Reflection Weight× Attenuation
+#reflection weight: How much of the wave does this material send back
+#Attenuation:How much does the echo lose strength while traveling eq: Attenuation=e^−αd
+attentation_coefficient = 0.5 # means for 1 Mhz wave tarvelling 1 cm distance 0.5 decibal of sound energy is lost 
+#convert the coefficient in Np/m
+# 0.5 dB/cm/MHz × 5 MHz =  2.5 dB/cm as the wave frequency is 5Mhz
+# 2.5 db/cm * 100 cm/m = 250 db/m
+#1 Np = 8.686 dB, so 250/8.68 = 28.8 Np/m
+tissue_weight = 1.0
+cyst_weight = 0.5
+coe = 28.8
+cell_index = cell_index = jnp.round(cell_near / cell_width).astype(jnp.int32)
+attenuation = jnp.exp(-coe*dist)
+echo = []
+for i,j in cell_index:
+ if tissue_matrix[i][j] == 1:
+  echo.append(tissue_weight * attenuation[i*column+j])
+ else:
+  echo.append(cyst_weight * attenuation[i*column+j])
+echo = jnp.array(echo)
+if __name__ == "__main__":
+  print("attenuation is: ")
+  print(attenuation)
+  print(jnp.min(dist))
+  print(jnp.max(dist))
+  print("The echo generated is: ")
+  print(echo) #echo amplitude: how strong the waves that reached the transducer
+
+========== ./simulation/recieve.py ==========
+'''Time (µs):      0    5    10   15   20   25 is the echo time of flight(by what echo arrives to transducers)
+Amplitude:      0    0   0.8   0   0.3   0   is the echo amplitude(hwo strong the echo is)
+
+both constitutes the rf sample data                                                              ''' 
+from scatter import *
+from wave_propagation import *
+import jax.numpy as jnp
+echo_amplitude = echo
+echo_tof = 2*time_delay
+rf_data = jnp.stack([echo_tof,echo_amplitude],axis=-1)
+if __name__ =="__main__":
+ print(echo_amplitude.shape)
+ print(echo_tof.shape)
+ print(rf_data)
+ print(rf_data.shape) #1600 blocks with each block 128 rows and 2 columns
+ 
+
+========== ./processing/analytic_signal.py ==========
+#analytic_signal.py
+
+# Convert the RF data to an analytic signal
+# RF data:
+# time:      0   5   10   15 ...
+# amplitude:  0   0   0.8  0.2 ...
+# Analytic signal:
+#  amplitude + j * Hilbert(amplitude)
+# Each transducer element can receive the same echo at a different time
+# because the elements are at different positions.
+
+# Element 1:  ///////
+# Element 2:      ///////
+# Element 3:          ///////
+# Hilbert transform creates a 90° phase-shifted version of each RF signal.
+# The original RF + its Hilbert transform form the analytic signal:
+# x + jH(x)
+# The analytic signal is then used by the beamforming process.
+# The beamformer applies the required delay to each transducer element
+# so that the echoes line up.
+# Element 1:  ///////
+# Element 2:  ///////
+# Element 3:  ///////
+# The aligned signals are then added to form the beamformed signal.
+#complex/analytic representation makes the delay operation easier to perform
+import sys
+sys.path[0]=sys.path[0].replace("processing","simulation")
+from recieve import *
+import jax.numpy as jnp
+import scipy
+from scipy.signal import hilbert
+k=rf_data[:,:,1]
+k1=rf_data[:,:,0]
+#analytic singal conversion
+val= scipy.signal.hilbert(k,axis=1)      #amplitude * hilbert_amp*j
+if __name__ == "__main__":
+  print(val)
+
+========== ./processing/aperature_weighting.py ==========
+#aperature_weighting.py
+
+# Aperture weighting: multiply each transducer's analytic signal by its weight before delay-and-sum beamforming.
+#hans weighting: assigning transducer elements different weights. Middle elements contribute strongly
+#The edge ones contributes less
+#used to control how much each transducer contributes. prevents side lobs(unwanted smaller beams beside the main beam)
+#equation is wn​=1/2*(1−cos(2πn/127)) where ​n=0,…,127
+from analytic_signal import *
+import sys
+sys.path[0] = sys.path[0].replace("processing","core")
+from probe import *
+import jax.numpy as jnp
+elem = jnp.arange(128)
+w = 0.5*(1-jnp.cos(
+        (2*jnp.pi*elem)/(array_elem-1)
+    )
+)
+ap_weighted = w * val
+print(k.shape)
